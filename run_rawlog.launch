@@ -1,0 +1,31 @@
+<launch>
+	<machine name="local" address="localhost" default="true" />
+
+	<arg name="base_frame" default="odom" />
+	<arg name="target_frame" default="base_link" />
+	<arg name="dataset" default="" />
+	<arg name="rate" default="5" />
+	<env name="PYTHONPATH" value="$(env PYTHONPATH):$(find tiny_slam)/src" />
+	
+	<node name="DataMergerNode" pkg="tiny_slam" type="merger.py" cwd="node" required="true">
+	  <remap from="laser_scan" to="/scan" />
+	  <param name="base_frame" value="$(arg base_frame)" />
+	  <param name="target_frame" value="$(arg target_frame)" />
+	</node>
+
+	<node name="TinySlamNode" pkg="tiny_slam" type="main.py" cwd="node" required="true" output="screen">
+	</node>
+
+	<node name="MapTrasformPublisher" pkg="tf" type="static_transform_publisher"
+	      args="0 0 0 0 0 0 odom_combined map 250" cwd="node" required="true"/>
+
+    <node pkg="mrpt_rawlog" type="rawlog_play_node" name="rawlog_play_node" output="screen">
+        <param name="debug" value="false"/> 
+        <param name="rawlog_file" value="$(arg path)"/>
+        <param name="rate" value="$(arg rate)"/>
+    </node>
+
+	<node name="rviz" pkg="rviz" type="rviz" respawn="true"
+	      args="-d $(find tiny_slam)/rviz/localize_debug.rviz" />
+
+</launch>
